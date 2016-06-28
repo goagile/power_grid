@@ -1,3 +1,11 @@
 from django.contrib import admin
+from .models import Graph
 
-# Register your models here.
+class GraphModelAdmin(admin.ModelAdmin):
+	search_fields = ['title']
+	list_display_links = ['title']
+	list_display = ['title', 'publish']
+	class Meta:
+		model = Graph
+
+admin.site.register(Graph, GraphModelAdmin)
