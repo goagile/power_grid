@@ -2,14 +2,16 @@ from django.db import models
 
 
 def upload_location(instance, filename):
-	return 'graph_%s/%s' % (instance.pk, filename)
+	return '{}_{}/{}'.format(Graph.media_subdir, instance.pk, filename)
 
 
 class Graph(models.Model):
+	media_subdir = 'graph'
 	title = models.CharField(max_length=120)
 	image = models.ImageField(
 		upload_to=upload_location,
-		null=True, blank=True,
+		null=True, 
+		blank=True,
 		width_field='width_field',
 		height_field='height_field',)
 	width_field = models.IntegerField(default=0)
