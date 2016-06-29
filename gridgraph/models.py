@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.urlresolvers import reverse
 
 
 def upload_location(instance, filename):
@@ -18,6 +19,28 @@ class Graph(models.Model):
 		blank=True,)
 	publish = models.DateTimeField(auto_now=False, auto_now_add=True)
 
+	class Meta:
+		ordering = ['-publish',]
+
 	def __str__(self):
 		return self.title
-		
+	
+	def get_details_url(self):
+		return reverse('graphs:details', kwargs={ 'pk': self.pk })
+
+	def get_create_url(self):
+		return reverse('graphs:create')	
+
+	def get_list_url(self):
+		return reverse('graphs:list')
+
+	def get_update_url(self):
+		return reverse('graphs:update', kwargs={ 'pk': self.pk })
+
+	def get_delete_url(self):
+		return reverse('graphs:delete', kwargs={ 'pk': self.pk })		
+
+	def get_graph_image(self):
+		if self.csv_file:
+			return True
+		return False

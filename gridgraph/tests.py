@@ -4,6 +4,7 @@ import graphviz as gv
 from django.test import TestCase
 from django.conf import settings
 from .domain import GraphRender
+from .models import Graph
 
 
 class TestInit(TestCase):
@@ -125,3 +126,11 @@ class TestUseCSV(TestCase):
 		instance = self.gr.save()
 		self.assertEqual('/media/graph_1/testo.png', instance.image.url)
 		self.assertEqual('/media/graph_1/testo.csv', instance.csv_file.url)
+
+
+# class TestInModelCall(TestCase):
+# 	def test_(self):
+# 		g = Graph(title='test_call', csv_file='z.csv')
+# 		g.save()
+# 		self.assertTrue(g.csv_file)
+# 		self.assertTrue(os.path.exists('media/z.csv'))

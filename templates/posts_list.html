@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block head_title %}Graphs list{% endblock head_title %}
+
+{% block content %}
+<div class="col-sm-6 col-sm-offset-3">
+	<div><h1>Graphs list:</h1></div>
+	<a id="create_new_post" href='{{ new_post.get_create_url }}' class="btn btn-success" role="button">Create new post</a>
+	<hr/>
+
+	{% for post in posts %}
+	<div class="row" id='post{{ post.pk }}'>
+		<div class="thumbnail">
+			<div class="caption">
+				<!-- {% include "post_cover_image.html" %} -->
+				<h2 id='post_title'>
+					<a href='{{ post.get_details_url }}'>{{ post.title|truncatechars:20 }}</a>&nbsp;
+					<small>{{ post.publish|timesince }}</small>
+				</h2>
+				<hr/>
+				<!-- <p id='post_content'>{{ post.content|linebreaks|truncatechars:250 }}</p> -->
+				<p>
+					<a href='{{ post.get_details_url }}' class="btn btn-primary" role="button">View</a>
+					<a id="edit_post" href='{{ post.get_update_url }}' class="btn btn-default" role="button">Edit</a>
+					<a id="delete_post" href='{{ post.get_delete_url }}' class="btn btn-danger" role="button">Delete</a>
+				</p>
+			</div>
+		</div>
+	</div>
+	{% endfor %}
+
+	{% include "pagination.html" %}
+</div>
+{% endblock content %}

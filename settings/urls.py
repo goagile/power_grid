@@ -15,16 +15,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.conf import settings
-from django.conf.urls import url
+from django.conf.urls import url, include
 from django.conf.urls.static import static
-from gridgraph.views import graph
+# from gridgraph.views import graph
 
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^$', graph, name='graph'),
+    # url(r'^$', graph, name='graph'),
+    url(r'^graphs/', include('gridgraph.urls', namespace='graphs'), name='graphs'),
 ]
 
 if settings.DEBUG:
-	# urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+	urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 	urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

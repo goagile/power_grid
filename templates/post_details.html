@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block head_title %}Post: {{ post.title }}{% endblock head_title %}
+
+{% block content %}
+<div class="col-sm-6 col-sm-offset-3">
+	<!-- {% include "post_cover_image.html" %} -->
+	<h2>{{ post.title }} <small>{{ post.publish }}</small></h2>
+	<hr/>
+	<!-- {{ post.content|linebreaks }} -->
+	<p>
+		<a id="back_to_list" href="{{ post.get_list_url }}" class="btn btn-primary" role="button">Back to list</a>
+		<a id="edit_post" href='{{ post.get_update_url }}' class="btn btn-default" role="button">Edit</a>
+		<a id="delete_post" href='{{ post.get_delete_url }}' class="btn btn-danger" role="button">Delete</a>
+	</p>
+</div>
+<div class="col-sm-12">
+	<img src="{{ image }}" class="img-rounded"></img>
+</div>
+{% endblock content %}

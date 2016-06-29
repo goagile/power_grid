@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block head_title %}New post{% endblock head_title %}
+
+{% block content %}
+<div class="col-sm-6 col-sm-offset-3">
+	<h2>Create post:</h2>
+	<form method='POST' enctype="multipart/form-data">
+		{% if not test %}{% csrf_token %}{% endif %}
+		{{ form.as_p }}
+		<input id='save' type='submit' class="btn btn-success" role="button" value='Save'/>
+	</form>
+</div>
+{% endblock content %}
