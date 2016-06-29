@@ -11,11 +11,7 @@ class Graph(models.Model):
 	image = models.ImageField(
 		upload_to=upload_location,
 		null=True, 
-		blank=True,
-		width_field='width_field',
-		height_field='height_field',)
-	width_field = models.IntegerField(default=0)
-	height_field = models.IntegerField(default=0)
+		blank=True,)
 	publish = models.DateTimeField(auto_now=False, auto_now_add=True)
 
 	def __str__(self):

@@ -7,19 +7,21 @@ from .models import Graph
 
 
 class GraphRender:
-	def __init__(self, filename, render_dir, render_format='png'):
+	def __init__(self, filename, gv_graph=None, render_dir='media', render_format='png'):
 		self.filename = filename
 		self.render_format = render_format
 		self.dotfile = '{}/{}'.format(render_dir, filename)
 		self.filepath = '{}.{}'.format(self.dotfile, self.render_format)
 		self.file = '{}.{}'.format(filename, render_format)
-		self.gv_graph = self.init()
 		self.media_dir = ''
 		self.media_filepath = ''
-		self.render()
+		if not gv_graph:
+			self.gv_graph = self.default_gv_graph()
+		# self.render()
 
-	def init(self):
+	def default_gv_graph(self):
 		graph = gv.Graph(format=self.render_format)
+		graph.attr('node', shape='circle')
 		graph.node('A')
 		graph.node('B')
 		graph.edge('A', 'B')
