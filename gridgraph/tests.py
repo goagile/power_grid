@@ -1,5 +1,6 @@
 import os
 import csv
+import graphviz as gv
 from django.test import TestCase
 from django.conf import settings
 from .domain import GraphRender
@@ -52,15 +53,31 @@ class TestCSV(TestCase):
 		'Узлы,Ветки,\n',
 		'Номер,Узел 1,Узел 2\n',
 		'0,0,1\n',
-		',0,2\n',
+		'1,0,2\n',
+		'2,1,2\n',
+		'0,2,1\n',
+		'1,,\n',
 	]
 	fixture = {
-		'nodes': ['0', '',],
+		'nodes': ['0','1','2'],
 		'edges': [
 			('0', '1',),
 			('0', '2',),
+			('1', '2',),
+			('2', '1',),
 		],
 	}
+	gv_source = """
+		graph {
+		      node [shape=circle]
+		      0
+		      2
+		      1
+		              0 -- 1
+		              0 -- 2
+		              1 -- 2
+		              2 -- 1
+		}"""
 
 	def setUp(self):
 		with open(self.filename, 'w') as f:
@@ -71,17 +88,37 @@ class TestCSV(TestCase):
 		if os.path.exists(self.filename):
 			os.remove(self.filename)
 
-	def test_(self):
-		result = from_csv(self.filename)
-		self.assertEqual(self.fixture['nodes'], result['nodes'])
-		self.assertEqual(self.fixture['edges'], result['edges'])
+	def test_from_csv(self):
+		result = read_csv(self.filename)
+		self.assertEqual(sorted(self.fixture['nodes']), sorted(result['nodes']))
+		self.assertEqual(sorted(self.fixture['edges']), sorted(result['edges']))
 
+	def test_init_from_csv(self):
+		gv_graph = init_from_csv(self.filename)
+		for node in self.fixture['nodes']:
+			self.assertIn(node, gv_graph.source)
+		for edge in self.fixture['edges']:
+			self.assertIn(edge[0]+' -- '+edge[1], gv_graph.source)
 
-def from_csv(filename):
-	result = {'nodes': [], 'edges': []}
+def init_from_csv(filename):
+	result = read_csv(filename)
+	nodes, edges = result['nodes'], result['edges']
+	gv_graph = gv.Graph(format='png')
+	gv_graph.attr('node', shape='circle')
+	for node in nodes:
+		gv_graph.node(node)
+	for edge in edges:
+		gv_graph.edge(edge[0], edge[1])
+	return gv_graph
+
+def read_csv(filename):
+	result = {'nodes': [], 'edges': [],}
 	with open(filename, 'r', newline='') as f:
 		reader = csv.reader(f); next(reader, None); next(reader, None)
 		for line in reader:
-			result['nodes'].append(line[0])
-			result['edges'].append((line[1], line[2]))
+			if line[0]:
+				result['nodes'].append(line[0])
+			if line[1] and line[2]:
+				result['edges'].append((line[1], line[2]))
+	result['nodes'] = list(set(result['nodes']))
 	return result
