@@ -76,13 +76,13 @@ class TestCSV(TestCase):
 			os.remove(self.filename)
 
 	def test_read_csv(self):
-		gr = GraphRender()
+		gr = GraphRender(filename='test')
 		result = gr.read_csv(self.filename)
 		self.assertEqual(sorted(self.fixture['nodes']), sorted(result['nodes']))
 		self.assertEqual(sorted(self.fixture['edges']), sorted(result['edges']))
 
 	def test_init_from_csv(self):
-		gr = GraphRender()
+		gr = GraphRender(filename='test')
 		gr.init_from_csv(self.filename)
 		source = gr.gv_graph.source
 		for node in self.fixture['nodes']:
@@ -104,26 +104,24 @@ class TestUseCSV(TestCase):
 	]
 
 	def setUp(self):
+		self.gr = GraphRender(filename='testo')
 		with open(self.test_filepath, 'w') as f:
 			for line in self.csv_lines:
 				f.write(line)
+		self.gr.init_from_csv(self.test_filepath)
 
 	def tearDown(self):
+		self.gr.clear_filepath()
 		if os.path.exists(self.test_filepath):
 			os.remove(self.test_filepath)
 
 	def test_init_from_csv(self):
 		self.assertTrue(os.path.exists(self.test_filepath))
-
-		gr = GraphRender(filename='testo')
-		gr.init_from_csv(self.test_filepath)
-		self.assertEqual('media/testo.png', gr.filepath)
-		self.assertEqual('media/testo.csv', gr.csv_filepath)
+		self.assertEqual('media/testo.png', self.gr.filepath)
+		self.assertEqual('media/testo.csv', self.gr.csv_filepath)
 
 	def test_save_model_and_csv(self):
-		gr = GraphRender(filename='testo')
-		gr.init_from_csv(self.test_filepath)
-		gr.render()
-		instance = gr.save()
+		self.gr.render()
+		instance = self.gr.save()
 		self.assertEqual('/media/graph_1/testo.png', instance.image.url)
 		self.assertEqual('/media/graph_1/testo.csv', instance.csv_file.url)

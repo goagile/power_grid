@@ -8,7 +8,7 @@ from .models import Graph
 
 
 class GraphRender:
-	def __init__(self, filename='test', gv_graph=None, render_dir='media', render_format='png'):
+	def __init__(self, filename, gv_graph=None, render_dir='media', render_format='png'):
 		self.filename = filename
 		self.render_format = render_format
 		self.dotfile = '{}/{}'.format(render_dir, filename)

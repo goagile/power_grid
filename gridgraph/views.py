@@ -4,6 +4,8 @@ from .domain import GraphRender
 
 
 def graph(request):
-	gr = GraphRender(render_format='svg')
-	gr.init_from_csv('test.csv')
+	gr = GraphRender(filename='zgraph', render_format='svg')
+	gr.init_from_csv('media/zgraph.csv')
+	gr.render()
+	gr.save()
 	return HttpResponse(gr.gv_graph.pipe().decode())
