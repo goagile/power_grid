@@ -34,19 +34,6 @@ class TestGraphRender(TestCase):
 			self.gr.media_filepath)
 
 
-# class TestGraphFromCSV(TestCase):
-# 	def setUp(self):
-# 		self.gr = GraphRender(filename='test_csv')
-# 		self.gr.from_csv(csv_filename)
-# 		self.gr.render()
-
-# 	def tearDown(self):
-# 		self.gr.clear_filepath()
-
-# 	def test_(self):
-# 		self.assertEqual('media/test_csv.png', self.gr.filepath)
-
-
 class TestCSV(TestCase):
 	filename = 'test.csv'
 	csv_lines = [
@@ -88,37 +75,55 @@ class TestCSV(TestCase):
 		if os.path.exists(self.filename):
 			os.remove(self.filename)
 
-	def test_from_csv(self):
-		result = read_csv(self.filename)
+	def test_read_csv(self):
+		gr = GraphRender()
+		result = gr.read_csv(self.filename)
 		self.assertEqual(sorted(self.fixture['nodes']), sorted(result['nodes']))
 		self.assertEqual(sorted(self.fixture['edges']), sorted(result['edges']))
 
 	def test_init_from_csv(self):
-		gv_graph = init_from_csv(self.filename)
+		gr = GraphRender()
+		gr.init_from_csv(self.filename)
+		source = gr.gv_graph.source
 		for node in self.fixture['nodes']:
-			self.assertIn(node, gv_graph.source)
+			self.assertIn(node, source)
 		for edge in self.fixture['edges']:
-			self.assertIn(edge[0]+' -- '+edge[1], gv_graph.source)
+			self.assertIn(edge[0]+' -- '+edge[1], source)
 
-def init_from_csv(filename):
-	result = read_csv(filename)
-	nodes, edges = result['nodes'], result['edges']
-	gv_graph = gv.Graph(format='png')
-	gv_graph.attr('node', shape='circle')
-	for node in nodes:
-		gv_graph.node(node)
-	for edge in edges:
-		gv_graph.edge(edge[0], edge[1])
-	return gv_graph
 
-def read_csv(filename):
-	result = {'nodes': [], 'edges': [],}
-	with open(filename, 'r', newline='') as f:
-		reader = csv.reader(f); next(reader, None); next(reader, None)
-		for line in reader:
-			if line[0]:
-				result['nodes'].append(line[0])
-			if line[1] and line[2]:
-				result['edges'].append((line[1], line[2]))
-	result['nodes'] = list(set(result['nodes']))
-	return result
+class TestUseCSV(TestCase):
+	test_filepath = 'media/testo.csv'
+	csv_lines = [
+		'Узлы,Ветки,\n',
+		'Номер,Узел 1,Узел 2\n',
+		'0,0,1\n',
+		'1,0,2\n',
+		'2,1,2\n',
+		'0,2,1\n',
+		'1,,\n',
+	]
+
+	def setUp(self):
+		with open(self.test_filepath, 'w') as f:
+			for line in self.csv_lines:
+				f.write(line)
+
+	def tearDown(self):
+		if os.path.exists(self.test_filepath):
+			os.remove(self.test_filepath)
+
+	def test_init_from_csv(self):
+		self.assertTrue(os.path.exists(self.test_filepath))
+
+		gr = GraphRender(filename='testo')
+		gr.init_from_csv(self.test_filepath)
+		self.assertEqual('media/testo.png', gr.filepath)
+		self.assertEqual('media/testo.csv', gr.csv_filepath)
+
+	def test_save_model_and_csv(self):
+		gr = GraphRender(filename='testo')
+		gr.init_from_csv(self.test_filepath)
+		gr.render()
+		instance = gr.save()
+		self.assertEqual('/media/graph_1/testo.png', instance.image.url)
+		self.assertEqual('/media/graph_1/testo.csv', instance.csv_file.url)
