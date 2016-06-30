@@ -1,0 +1,13 @@
+<nav class="navbar navbar-default navbar-fixed-top">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">{{ post.title }}</a>
+    </div>
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <form class="navbar-form navbar-left" role="search">
+		<a id="back_to_list" href="{{ post.get_list_url }}" class="btn btn-primary" role="button">Back to list</a>
+		<a id="delete_post" href='{{ post.get_delete_url }}' class="btn btn-danger" role="button">Delete</a>
+      </form>
+    </div>
+  </div>
+</nav>

@@ -1,136 +1,95 @@
 import os
+import shutil
 import csv
 import graphviz as gv
 from django.test import TestCase
 from django.conf import settings
 from .domain import GraphRender
-from .models import Graph
+from .models import Graph, upload_location
+from django.core.files import File
 
 
 class TestInit(TestCase):
+	def test_base_dir(self):
+		self.assertEqual(
+			'C:\\github\\energy_network\\src', 
+			settings.BASE_DIR)
+
 	def test_media_root(self):
-		self.assertEqual('C:\\github\\energy_network\\media_cdn', settings.MEDIA_ROOT)
+		self.assertEqual(
+			'C:\\github\\energy_network\\src\\media', 
+			settings.MEDIA_ROOT)
 
 	def test_media_url(self):
 		self.assertEqual('/media/', settings.MEDIA_URL)
 
 
-class TestGraphRender(TestCase):
+class TestUploadLocation(TestCase):
 	def setUp(self):
-		self.gr = GraphRender(filename='test_1')
-		self.gr.render()
+		self.csv_filename = 'test.csv'
+		self.g = Graph(title='test')
 
-	def tearDown(self):
-		self.gr.clear_filepath()
+	def test_upload_location(self):
+		self.g.save()
+		upload_to = upload_location(instance=self.g, filename=self.csv_filename)
+		self.assertEqual('graph_1/test.csv', upload_to)
 
-	def test_filename_and_render_filepath(self):
-		self.assertEqual('media/test_1.png', self.gr.filepath)
-		self.assertTrue(os.path.exists(self.gr.dotfile))
-		self.assertTrue(os.path.exists(self.gr.filepath))
-
-	def test_save_model(self):
-		instance = self.gr.save()
-		self.assertEqual('/media/graph_1/test_1.png', instance.image.url)
-		self.assertEqual('C:\\github\\energy_network\\media_cdn\\graph_1\\test_1.png',
-			self.gr.media_filepath)
+	def test_save_and_create_graph_model_pk(self):
+		self.assertEqual(None, self.g.pk)
+		self.g.save()
+		self.assertEqual(1, self.g.pk)
+		self.assertEqual(1, Graph.objects.count())
 
 
-class TestCSV(TestCase):
-	filename = 'test.csv'
-	csv_lines = [
-		'Узлы,Ветки,\n',
-		'Номер,Узел 1,Узел 2\n',
-		'0,0,1\n',
-		'1,0,2\n',
-		'2,1,2\n',
-		'0,2,1\n',
-		'1,,\n',
-	]
-	fixture = {
-		'nodes': ['0','1','2'],
-		'edges': [
-			('0', '1',),
-			('0', '2',),
-			('1', '2',),
-			('2', '1',),
-		],
-	}
-	gv_source = """
-		graph {
-		      node [shape=circle]
-		      0
-		      2
-		      1
-		              0 -- 1
-		              0 -- 2
-		              1 -- 2
-		              2 -- 1
-		}"""
-
-	def setUp(self):
-		with open(self.filename, 'w') as f:
+class TestSaveFiles(TestCase):
+	test_csv = 'test.csv'
+	
+	def create_test_csv(self):
+		with open(self.test_csv, 'w') as f:
 			for line in self.csv_lines:
 				f.write(line)
 
-	def tearDown(self):
-		if os.path.exists(self.filename):
-			os.remove(self.filename)
-
-	def test_read_csv(self):
-		gr = GraphRender(filename='test')
-		result = gr.read_csv(self.filename)
-		self.assertEqual(sorted(self.fixture['nodes']), sorted(result['nodes']))
-		self.assertEqual(sorted(self.fixture['edges']), sorted(result['edges']))
-
-	def test_init_from_csv(self):
-		gr = GraphRender(filename='test')
-		gr.init_from_csv(self.filename)
-		source = gr.gv_graph.source
-		for node in self.fixture['nodes']:
-			self.assertIn(node, source)
-		for edge in self.fixture['edges']:
-			self.assertIn(edge[0]+' -- '+edge[1], source)
-
-
-class TestUseCSV(TestCase):
-	test_filepath = 'media/testo.csv'
-	csv_lines = [
-		'Узлы,Ветки,\n',
-		'Номер,Узел 1,Узел 2\n',
-		'0,0,1\n',
-		'1,0,2\n',
-		'2,1,2\n',
-		'0,2,1\n',
-		'1,,\n',
-	]
-
 	def setUp(self):
-		self.gr = GraphRender(filename='testo')
-		with open(self.test_filepath, 'w') as f:
-			for line in self.csv_lines:
-				f.write(line)
-		self.gr.init_from_csv(self.test_filepath)
+		self.g = Graph(title='test', name='test')
+		self.csv_lines = [
+			'Узлы,Ветки,\n',
+			'Номер,Узел 1,Узел 2\n',
+			'0,0,1\n',
+			'1,0,2\n',
+			'2,1,2\n',
+			'0,2,1\n',
+			'1,,\n',
+		]
+		self.create_test_csv()
 
 	def tearDown(self):
-		self.gr.clear_filepath()
-		if os.path.exists(self.test_filepath):
-			os.remove(self.test_filepath)
+		if os.path.exists(self.test_csv):
+			os.remove(self.test_csv)
+		upload_to = os.path.join('media', upload_location(self.g, self.test_csv))
+		if os.path.exists(upload_to):
+			path, file = os.path.split(upload_to)
+			shutil.rmtree(path)
 
-	def test_init_from_csv(self):
-		self.assertTrue(os.path.exists(self.test_filepath))
-		self.assertEqual('media/testo.png', self.gr.filepath)
-		self.assertEqual('media/testo.csv', self.gr.csv_filepath)
+	def test_render_img_from_csv(self):
+		g = self.g
+		g.save()
+		g.save_csv_file(self.test_csv)
+		self.assertEqual('/media/graph_1/test.csv', g.csv_file.url)
+		self.assertEqual('media/graph_1/test', g.get_dotpath())
+		self.assertTrue(os.path.exists('media/graph_1/test.csv'))
 
-	def test_save_model_and_csv(self):
-		self.gr.render()
-		instance = self.gr.save()
-		self.assertEqual('/media/graph_1/testo.png', instance.image.url)
-		self.assertEqual('/media/graph_1/testo.csv', instance.csv_file.url)
+		img = g.render_from_csv(render_format='png')
+		self.assertEqual(g.get_dotpath()+'.png', img)
+		self.assertTrue(os.path.exists(g.get_dotpath()+'.png'))
 
+	def test_render_and_save_from_csv(self):
+		g = self.g
 
-# class TestInModelCall(TestCase):
-# 	def test_(self):
-# 		g = Graph(title='test_call', csv_file='z.csv')
-# 		g.save()
-# 		self.assertTrue(g.csv_file)
-# 		self.assertTrue(os.path.exists('media/z.csv'))
+		g.render_and_save_from_csv(
+			csv_source=self.test_csv, 
+			render_format='png')
+
+		self.assertEqual('/media/graph_1/test.csv', g.csv_file.url)
+		self.assertEqual('media/graph_1/test', g.get_dotpath())
+		self.assertTrue(os.path.exists('media/graph_1/test.csv'))
+		self.assertTrue(os.path.exists(g.get_dotpath()+'.png'))
