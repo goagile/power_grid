@@ -39,12 +39,27 @@ def graph_create(request, test=False):
 		title = request.POST.get('title', '')
 		csv_file = request.FILES.get('csv_file', '')
 
-		instance = Graph(title=title)
-		instance.render_and_save_from_csv(
-			csv_source=csv_file.name, 
-			render_format='svg')
+		if not title:
+			title = 'empty'
 
-		return HttpResponseRedirect(instance.get_details_url())
+		g = Graph(title=title)
+		g.save()
+
+		if not csv_file:
+			csv_file = 'empty.csv'
+
+		g.csv_file = csv_file
+		g.save()
+
+		s = g.csv_file.url[1:]
+
+		img = g.render_from_csv(csv_source=s, render_format='svg')
+		g.image = img.replace('media/', '')
+		g.save()
+
+		s = 'media/graph_'+str(g.pk)+'/graph.svg'
+
+		return HttpResponseRedirect(g.get_details_url())
 	context = { 'form': form, 'test': test }
 	return render(request, 'post_form.html', context)
 
@@ -52,15 +67,13 @@ def graph_update(request, pk=0, test=False):
 	instance = get_object_or_404(Graph, pk=pk)
 	form = GraphForm(request.POST or None, request.FILES or None, instance=instance)
 	if form.is_valid():
-		instance.title = request.POST.get('title', '')
-		instance.save()
-		
-		file = request.FILES.get('csv_file', '')
-		instance.save_csv_file(source=file.name)
-		
-		dotpath = instance.get_dotpath()
-		instance.render_from_csv(dotpath + '.csv')
-		instance.save_image_file(source=dotpath + '.svg')
+		title = request.POST.get('title', '')
+		csv_file = request.FILES.get('csv_file', '')
+
+		instance.title = title
+		instance.render_and_save_from_csv(
+			csv_source=csv_file.name, 
+			render_format='svg')
 
 		return HttpResponseRedirect(instance.get_details_url())
 	context = {'form': form, 'test': test,}

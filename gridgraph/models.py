@@ -47,10 +47,9 @@ class Graph(models.Model):
 		return reverse('graphs:delete', kwargs={ 'pk': self.pk })		
 
 	def save_csv_file(self, source):
-		if os.path.exists(source):
-			with open(source, 'rb') as f:
-				filename=self.name+'.csv'
-				self.csv_file.save(filename, File(f))
+		with open(source, 'rb') as f:
+			filename = self.name + '.csv'
+			self.csv_file.save(filename, File(f))
 
 	def save_image_file(self, source, file_format='.svg'):
 		if os.path.exists(source):
@@ -64,28 +63,67 @@ class Graph(models.Model):
 			upload_location(self),
 			self.name,)
 
-	def render_and_save_from_csv(self, csv_source=None, render_format='svg'):
+	def render_and_save_from_csv(self, csv_source, render_format='svg'):
 		self.save()
 		self.save_csv_file(csv_source)
-		img = self.render_from_csv(render_format=render_format)
+		csv_source = self.get_dotpath()+'.csv'
+		img = self.render_from_csv(
+			csv_source=csv_source, render_format=render_format)
 		self.image = img.replace('media/', '')
 		self.save()
 
-	def render_from_csv(self, csv_source=None, render_format='svg'):
-
-		if not csv_source:
-			csv_source = self.get_dotpath()+'.csv'
-
+	def render_from_csv(self, csv_source, render_format='svg'):
 		gv_graph = self.create_from_csv(filename=csv_source, 
 			render_format=render_format)
 		img = gv_graph.render(filename=self.get_dotpath())
 		return img
 
+	def apply_styles(self, graph, styles):
+		graph.graph_attr.update(
+			('graph' in styles and styles['graph']) or {}
+		)
+		graph.node_attr.update(
+			('nodes' in styles and styles['nodes']) or {}
+		)
+		graph.edge_attr.update(
+			('edges' in styles and styles['edges']) or {}
+		)
+		return graph
+
 	def create_from_csv(self, filename, render_format='svg'):
 		result = self.read_csv(filename)
 		nodes, edges = result['nodes'], result['edges']
-		gv_graph = gv.Graph(format=render_format)
-		gv_graph.attr('node', shape='circle')
+
+		gv_graph = gv.Graph(format=render_format, engine='fdp')
+		# gv_graph = gv.Graph(format=render_format)
+		# gv_graph = gv.Graph(format=render_format, engine='circo')
+		# gv_graph = gv.Graph(format=render_format, engine='neato')
+		# gv_graph = gv.Graph(format=render_format, engine='twopi')
+		
+		styles = {
+			'graph': {
+				'label': self.title,
+				'fontsize': '12',
+				'fontcolor': 'white',
+				'bgcolor': '#333333',
+			},
+			'nodes': {
+				'fontname': 'Helvetica',
+				'shape': 'circle',
+				'fontcolor': 'white',
+				'color': 'white',
+				'style': 'filled',
+				'fillcolor': '#006699',
+			},
+			'edges': {
+				'color': 'white',
+			}
+		}
+
+		self.apply_styles(gv_graph, styles)
+
+		gv_graph.body.append('size="30"')
+
 		for node in nodes:
 			gv_graph.node(node)
 		for edge in edges:

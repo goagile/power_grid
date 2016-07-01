@@ -63,12 +63,11 @@ class TestSaveFiles(TestCase):
 		self.create_test_csv()
 
 	def tearDown(self):
+		# if os.path.exists('media'):
+		# 	shutil.rmtree('media')
+		# os.mkdir('media')
 		if os.path.exists(self.test_csv):
 			os.remove(self.test_csv)
-		upload_to = os.path.join('media', upload_location(self.g, self.test_csv))
-		if os.path.exists(upload_to):
-			path, file = os.path.split(upload_to)
-			shutil.rmtree(path)
 
 	def test_render_img_from_csv(self):
 		g = self.g
@@ -78,7 +77,8 @@ class TestSaveFiles(TestCase):
 		self.assertEqual('media/graph_1/test', g.get_dotpath())
 		self.assertTrue(os.path.exists('media/graph_1/test.csv'))
 
-		img = g.render_from_csv(render_format='png')
+		img = g.render_from_csv(csv_source='media/graph_1/test.csv',
+			render_format='png')
 		self.assertEqual(g.get_dotpath()+'.png', img)
 		self.assertTrue(os.path.exists(g.get_dotpath()+'.png'))
 
@@ -86,7 +86,7 @@ class TestSaveFiles(TestCase):
 		g = self.g
 
 		g.render_and_save_from_csv(
-			csv_source=self.test_csv, 
+			csv_source=self.test_csv,
 			render_format='png')
 
 		self.assertEqual('/media/graph_1/test.csv', g.csv_file.url)
