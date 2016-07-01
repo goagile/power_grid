@@ -8,6 +8,8 @@
 - перейти в каталог скачанного репозитория в терминале
 - установить пакеты из файла requirements.txt
 `pip install -r requirements.txt`
+- выполнить миграцию база данных
+`python manage.py migrate`
 - запустить сервер
 `python manage.py runserver 2016`
 - перейти по ссылке http://127.0.0.1:2016/graphs/
